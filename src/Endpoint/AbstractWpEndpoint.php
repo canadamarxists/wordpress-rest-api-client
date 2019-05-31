@@ -45,7 +45,16 @@ abstract class AbstractWpEndpoint
 
         if ($response->hasHeader('Content-Type')
             && substr($response->getHeader('Content-Type')[0], 0, 16) === 'application/json') {
-            return json_decode($response->getBody()->getContents(), true);
+
+            $total_pages = $response->hasHeader('X-WP-TotalPages') ? $response->getHeader('X-WP-TotalPages')[0] : null;
+
+            $total_results = $response->hasHeader('X-WP-Total') ? $response->getHeader('X-WP-Total')[0] : null;
+
+            return [
+                'data' => json_decode($response->getBody()->getContents(), true),
+                'total_pages' => $total_pages,
+                'total_results' => $total_results
+            ];
         }
 
         throw new RuntimeException('Unexpected response');
