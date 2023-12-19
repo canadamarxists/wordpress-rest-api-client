@@ -15,7 +15,7 @@ abstract class AbstractWpEndpoint
     /**
      * @var WpClient
      */
-    private $client;
+    protected $client;
 
     /**
      * Users constructor.
@@ -33,6 +33,7 @@ abstract class AbstractWpEndpoint
      * @param array $params - parameters that can be passed to GET
      *        e.g. for tags: https://developer.wordpress.org/rest-api/reference/tags/#arguments
      * @return array
+     * @throws \RuntimeException
      */
     public function get($id = null, array $params = null)
     {
@@ -63,6 +64,7 @@ abstract class AbstractWpEndpoint
     /**
      * @param array $data
      * @return array
+     * @throws \RuntimeException
      */
     public function save(array $data)
     {
@@ -78,6 +80,31 @@ abstract class AbstractWpEndpoint
 
         if ($response->hasHeader('Content-Type')
             && substr($response->getHeader('Content-Type')[0], 0, 16) === 'application/json') {
+            return json_decode($response->getBody()->getContents(), true);
+        }
+
+        throw new RuntimeException('Unexpected response');
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     * @throws \RuntimeException
+     */
+    public function delete(array $data)
+    {
+        $url = $this->getEndpoint();
+
+        if (isset($data['ID'])) {
+            $url .= '/' . $data['ID'];
+        }
+
+        $request = new Request('DELETE', $url);
+        $response = $this->client->send($request);
+
+        if ($response->hasHeader('Content-Type')
+            && substr($response->getHeader('Content-Type')[0], 0, 16) === 'application/json'
+        ) {
             return json_decode($response->getBody()->getContents(), true);
         }
 
